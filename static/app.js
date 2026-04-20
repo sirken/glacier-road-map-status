@@ -50,12 +50,12 @@ const getPinIcon = (pinType) => {
 };
 
 async function init() {
-    const res = await fetch('/api/available_dates');
-    const data = await res.json();
+    // Hit the new endpoint
+    const res = await fetch('/api/timeline_data');
+    timelineData = await res.json();
 
-    // Parse our new object array
-    availableDates = data.map(d => d.date);
-    data.forEach(d => { dateMetadata[d.date] = d.pins; });
+    // Extract just the dates for our navigation logic
+    availableDates = timelineData.map(d => d.date);
 
     if (availableDates.length > 0) {
         loadDataForDate(availableDates[0]);
@@ -108,24 +108,57 @@ function renderTimeline() {
     const timeline = document.getElementById('timeline');
     timeline.innerHTML = '';
 
+    // Grab our 30-day window
     const startIdx = Math.max(0, currentDateIndex - 15);
-    const windowDates = availableDates.slice(startIdx, startIdx + 30).reverse();
+    const endIdx = Math.min(availableDates.length, startIdx + 30);
 
-    windowDates.forEach(date => {
+    // Create an array of the indices we want to render, and reverse it (older to newer left-to-right)
+    const windowIndices = [];
+    for(let i = startIdx; i < endIdx; i++) {
+        windowIndices.push(i);
+    }
+    windowIndices.reverse();
+
+    windowIndices.forEach(idx => {
+        const todayData = timelineData[idx];
+        const date = todayData.date;
+
+        // In our array, index 0 is newest. So idx + 1 is "yesterday"
+        const yesterdayData = timelineData[idx + 1];
+
         const item = document.createElement('div');
         item.className = `timeline-item ${date === availableDates[currentDateIndex] ? 'active' : ''}`;
         item.innerText = date;
 
-        // Display actual events from the database metadata
         const iconContainer = document.createElement('div');
         iconContainer.style.marginTop = '5px';
         iconContainer.style.display = 'flex';
         iconContainer.style.gap = '5px';
 
-        const pins = dateMetadata[date] || [];
-        if (pins.includes('hiker_biker')) iconContainer.innerHTML += '<span>🚴</span>';
-        if (pins.includes('snow_plow')) iconContainer.innerHTML += '<span>🚜</span>';
-        if (pins.includes('winter_rec')) iconContainer.innerHTML += '<span>⛔️️</span>';
+        const movedPins = new Set();
+
+        // LOGIC: Check if today's pins moved since yesterday
+        if (yesterdayData) {
+            todayData.pins.forEach(todayPin => {
+                // Try to find a pin from yesterday with the exact same type and coordinates
+                const matchFound = yesterdayData.pins.some(yesterdayPin =>
+                    yesterdayPin.type === todayPin.type && yesterdayPin.geom === todayPin.geom
+                );
+
+                // If no match is found, this pin is new or moved!
+                if (!matchFound) {
+                    movedPins.add(todayPin.type);
+                }
+            });
+        } else {
+            // If there is no "yesterday" (it's the oldest record in the DB),
+            // treat all pins as "new" so they show up.
+            todayData.pins.forEach(p => movedPins.add(p.type));
+        }
+
+        // Draw icons based ONLY on the pins that moved/appeared
+        if (movedPins.has('hiker_biker')) iconContainer.innerHTML += '<span>🚴</span>';
+        if (movedPins.has('winter_rec')) iconContainer.innerHTML += '<span>⛔️</span>';
 
         if (iconContainer.innerHTML !== '') {
             item.appendChild(iconContainer);

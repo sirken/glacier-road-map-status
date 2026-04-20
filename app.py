@@ -16,24 +16,32 @@ def index():
     return render_template('index.html')
 
 
-@app.route('/api/available_dates')
-def available_dates():
+@app.route('/api/timeline_data')
+def timeline_data():
     conn = get_db_connection()
-    # Query returns the date and a comma-separated list of pin types for that date
-    query = '''
-        SELECT r.record_date, 
-               (SELECT GROUP_CONCAT(DISTINCT pin_type) FROM pin_status WHERE record_date = r.record_date) as pins
-        FROM (SELECT DISTINCT record_date FROM road_status) r
-        ORDER BY r.record_date DESC
-    '''
-    dates = conn.execute(query).fetchall()
+
+    # Get all distinct dates that have pin data
+    dates_rows = conn.execute('SELECT DISTINCT record_date FROM pin_status ORDER BY record_date DESC').fetchall()
+
+    # Get the geometries for ONLY the hiker/biker and hazard (winter_rec) pins
+    pins_rows = conn.execute('''
+        SELECT record_date, pin_type, geometry 
+        FROM pin_status 
+        WHERE geometry IS NOT NULL 
+          AND pin_type IN ('hiker_biker', 'winter_rec')
+    ''').fetchall()
     conn.close()
 
-    result = []
-    for row in dates:
-        pins = row['pins'].split(',') if row['pins'] else []
-        result.append({'date': row['record_date'], 'pins': pins})
+    # Group the pins by date
+    data_by_date = {row['record_date']: [] for row in dates_rows}
+    for row in pins_rows:
+        data_by_date[row['record_date']].append({
+            'type': row['pin_type'],
+            'geom': row['geometry']
+        })
 
+    # Format as a list sorted by newest date to oldest
+    result = [{'date': d['record_date'], 'pins': data_by_date[d['record_date']]} for d in dates_rows]
     return jsonify(result)
 
 
