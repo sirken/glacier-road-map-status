@@ -1,6 +1,13 @@
 # glacier-road-map-status
 Get daily glacier road status, hiker/biker icons and save to a local sqlite DB so we can see changes over time
 
+## Features
+
+- Daily retrieve new geojson data
+- Client UI to view historical data on a map
+- Cycle through days with left/right arrow keys
+- Show timeline at the bottom
+- Highlight timeline days when geojson data has changed
 
 ## Client
 
@@ -19,6 +26,13 @@ SERVER=<IP or hostname>
 
 ## Server
 Retrieve new geojson data on a schedule
+
+### Copy `fetch_data.py` to the server
+
+```shell
+mkdir -p /path/to/glacier-road-map-status
+cp /path/from/fetch_data.py /path/to/glacier-road-map-status/
+```
 
 ### Scheduler
 
