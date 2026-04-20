@@ -1,5 +1,39 @@
+# glacier-road-map-status
+Get daily glacier road status, hiker/biker icons and save to a local sqlite DB so we can see changes over time
 
-# Existing page example
+
+## Client
+
+### .env file
+
+```shell
+SERVER=<IP or hostname>
+```
+
+### Update database from the server
+
+```shell
+./update_db
+```
+
+
+## Server
+Retrieve new geojson data on a schedule
+
+### Scheduler
+
+```shell
+crontab -e
+```
+
+```shell
+# Get new data daily
+0 3 * * * cd /path/to/glacier-road-map-status && /usr/bin/python fetch_data.py
+```
+
+<hr>
+
+# AI prompt
 
 This webpage shows a map with the road status of Glacier National park
 https://www.nps.gov/glac/planyourvisit/directions.htm
