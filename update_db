@@ -2,4 +2,24 @@
 
 source .env
 
-scp $(whoami)@$SERVER:~/glacier-road-map-status/glacier_data.db .
+src="glacier_data.db"
+timestamp=$(date +"%Y%m%d-%H%M")
+dst="${src%.db}_$timestamp.db"
+
+# 1. Create the backup (if the local file already exists)
+if [ -f "$src" ]; then
+    cp -- "$src" "$dst"
+fi
+
+echo "Download the latest database from the server..."
+scp "$(whoami)@$SERVER:~/glacier-road-map-status/$src" .
+
+# 3. Compare the new file and the backup
+if [ -f "$src" ] && [ -f "$dst" ]; then
+    if cmp -s "$src" "$dst"; then
+        echo "No changes detected. Removing redundant backup..."
+        rm -- "$dst"
+    else
+        echo "Database changes detected! Old database backed up as $dst"
+    fi
+fi
