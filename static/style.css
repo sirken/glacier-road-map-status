@@ -1,0 +1,80 @@
+body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    font-family: Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+}
+
+#controls {
+    height: 50px;
+    background: #f8f9fa;
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    gap: 15px;
+    border-bottom: 1px solid #ccc;
+}
+
+#map-container {
+    height: calc(75vh - 50px); /* 3/4 of screen minus controls */
+    width: 100%;
+}
+
+#map {
+    height: 100%;
+    width: 100%;
+}
+
+#timeline-container {
+    height: 25vh; /* 1/4 of screen */
+    background: #2c3e50;
+    color: white;
+    overflow-x: auto;
+    display: flex;
+    align-items: center;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+#timeline {
+    display: flex;
+    gap: 30px;
+    min-width: 100%;
+}
+
+.timeline-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    opacity: 0.6;
+    transition: opacity 0.2s;
+    min-width: 120px;
+    text-align: center;
+}
+
+.timeline-item:hover, .timeline-item.active {
+    opacity: 1;
+}
+
+.timeline-item.active {
+    font-weight: bold;
+    color: #4CAF50;
+    border-bottom: 3px solid #4CAF50;
+}
+
+.event-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #e74c3c;
+    margin-top: 10px;
+}
+
+.filters {
+    display: flex;
+    gap: 10px;
+    margin-left: auto;
+}

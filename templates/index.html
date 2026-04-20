@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Glacier NP Historical Map</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div id="controls">
+        <input type="date" id="datePicker">
+        <button id="btnToday">Today</button>
+        <button id="btnPrev">&larr; Prev Day</button>
+        <button id="btnNext">Next Day &rarr;</button>
+
+        <div class="filters">
+            <label><input type="checkbox" id="filterRoads" checked> Roads</label>
+            <label><input type="checkbox" id="filterGates" checked> Gates</label>
+            <label><input type="checkbox" id="filterHikers" checked> Hiker/Biker</label>
+        </div>
+        <span id="currentDateDisplay">Loading...</span>
+    </div>
+
+    <div id="map-container">
+        <div id="map"></div>
+    </div>
+
+    <div id="timeline-container">
+        <div id="timeline">
+            </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="/static/app.js"></script>
+</body>
+</html>
