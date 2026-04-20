@@ -1,0 +1,5 @@
+#!/bin/bash
+
+source .env
+
+scp $(whoami)@$SERVER:~/glacier-road-map-status/glacier_data.db .
