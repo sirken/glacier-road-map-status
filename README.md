@@ -24,21 +24,22 @@ uv add flask requests
 SERVER=<IP or hostname>
 ```
 
-### Update database from the server
-
-```shell
-./update_db
-```
-
-### Run client IU
+### Run client UI
+Updates the DB and runs the client
 
 ```shell
 ./client_ui
 ```
 
+### Run client UI (manual steps)
+Update the DB from the server 
 
 ```shell
-# manually
+./update_db
+```
+
+Run the client UI
+```shell
 uv run python app.py
 ```
 
