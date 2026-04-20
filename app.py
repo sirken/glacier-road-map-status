@@ -19,9 +19,22 @@ def index():
 @app.route('/api/available_dates')
 def available_dates():
     conn = get_db_connection()
-    dates = conn.execute('SELECT DISTINCT record_date FROM road_status ORDER BY record_date DESC').fetchall()
+    # Query returns the date and a comma-separated list of pin types for that date
+    query = '''
+        SELECT r.record_date, 
+               (SELECT GROUP_CONCAT(DISTINCT pin_type) FROM pin_status WHERE record_date = r.record_date) as pins
+        FROM (SELECT DISTINCT record_date FROM road_status) r
+        ORDER BY r.record_date DESC
+    '''
+    dates = conn.execute(query).fetchall()
     conn.close()
-    return jsonify([dict(row)['record_date'] for row in dates])
+
+    result = []
+    for row in dates:
+        pins = row['pins'].split(',') if row['pins'] else []
+        result.append({'date': row['record_date'], 'pins': pins})
+
+    return jsonify(result)
 
 
 @app.route('/api/data')
