@@ -9,6 +9,13 @@ Get daily glacier road status, hiker/biker icons and save to a local sqlite DB s
 - Show timeline at the bottom
 - Highlight timeline days when geojson data has changed
 
+## Setup
+```shell
+uv python install 3.12
+uv init -p 3.12
+uv add flask requests
+```
+
 ## Client
 
 ### .env file
@@ -21,6 +28,18 @@ SERVER=<IP or hostname>
 
 ```shell
 ./update_db
+```
+
+### Run client IU
+
+```shell
+./client_ui
+```
+
+
+```shell
+# manually
+uv run python app.py
 ```
 
 
