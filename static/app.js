@@ -5,7 +5,7 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 
 let currentLayers = L.layerGroup().addTo(map);
 let availableDates = [];
-let dateMetadata = {}; // Store events for timeline
+let timelineData = []; // Store events for timeline
 let currentDateIndex = 0;
 
 const getPinIcon = (pinType) => {
@@ -50,15 +50,25 @@ const getPinIcon = (pinType) => {
 };
 
 async function init() {
-    // Hit the new endpoint
     const res = await fetch('/api/timeline_data');
-    timelineData = await res.json();
+    const data = await res.json();
 
-    // Extract just the dates for our navigation logic
-    availableDates = timelineData.map(d => d.date);
+    availableDates = data.map(d => d.date);
+    timelineData = data; // Just save the whole array directly!
 
     if (availableDates.length > 0) {
         loadDataForDate(availableDates[0]);
+
+        // Initialize Flatpickr HERE, passing in our availableDates array
+        flatpickr("#datePicker", {
+            enable: availableDates, // This is the magic line!
+            dateFormat: "Y-m-d",
+            defaultDate: availableDates[0],
+            onChange: function(selectedDates, dateStr, instance) {
+                loadDataForDate(dateStr);
+            }
+        });
+
     } else {
         document.getElementById('currentDateDisplay').innerText = "No data in database. Run fetch_data.py!";
     }
@@ -66,7 +76,11 @@ async function init() {
 
 async function loadDataForDate(dateStr) {
     document.getElementById('currentDateDisplay').innerText = "Date: " + dateStr;
-    document.getElementById('datePicker').value = dateStr;
+    // Check if flatpickr is initialized, then update it
+    const dp = document.getElementById('datePicker')._flatpickr;
+    if (dp) {
+        dp.setDate(dateStr, false); // false prevents triggering onChange again
+    }
     currentDateIndex = availableDates.indexOf(dateStr);
 
     const res = await fetch(`/api/data?date=${dateStr}`);
@@ -183,14 +197,6 @@ document.getElementById('btnNext').onclick = () => {
 document.getElementById('btnToday').onclick = () => {
     if (availableDates.length > 0) loadDataForDate(availableDates[0]);
 };
-
-document.getElementById('datePicker').addEventListener('change', (e) => {
-    if (availableDates.includes(e.target.value)) {
-        loadDataForDate(e.target.value);
-    } else {
-        alert("No data available for this date in the database.");
-    }
-});
 
 document.querySelectorAll('.filters input').forEach(cb => {
     cb.addEventListener('change', () => loadDataForDate(availableDates[currentDateIndex]));
