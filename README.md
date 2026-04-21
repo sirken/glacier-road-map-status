@@ -1,6 +1,13 @@
 # glacier-road-map-status
 Get daily glacier road status, hiker/biker icons and save to a local sqlite DB so we can see changes over time
 
+## TODO
+- Also track road segments (if they are open/closed)
+- Shrink timeline widths, too wide
+- Add timeline vertical separation
+- Change alert box to temporary overlay that fades away
+- Download leaflet and flapicker JS/css files for offline
+
 ## Features
 
 - Daily retrieve new geojson data
