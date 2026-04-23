@@ -20,8 +20,8 @@ def index():
 def timeline_data():
     conn = get_db_connection()
 
-    # Get all distinct dates that have pin data
-    dates_rows = conn.execute('SELECT DISTINCT record_date FROM pin_status ORDER BY record_date DESC').fetchall()
+    # Get all distinct dates that have data (using road_status is safer for a baseline)
+    dates_rows = conn.execute('SELECT DISTINCT record_date FROM road_status ORDER BY record_date DESC').fetchall()
 
     # Get the geometries for ONLY the hiker/biker and hazard (winter_rec) pins
     pins_rows = conn.execute('''
@@ -30,18 +30,36 @@ def timeline_data():
         WHERE geometry IS NOT NULL 
           AND pin_type IN ('hiker_biker', 'winter_rec')
     ''').fetchall()
+
+    # Get the ID and status for the roads
+    roads_rows = conn.execute('SELECT record_date, cartodb_id, status FROM road_status').fetchall()
+
     conn.close()
 
-    # Group the pins by date
-    data_by_date = {row['record_date']: [] for row in dates_rows}
+    # Group the pins and roads by date
+    data_by_date = {row['record_date']: {'pins': [], 'roads': []} for row in dates_rows}
+
     for row in pins_rows:
-        data_by_date[row['record_date']].append({
-            'type': row['pin_type'],
-            'geom': row['geometry']
-        })
+        if row['record_date'] in data_by_date:
+            data_by_date[row['record_date']]['pins'].append({
+                'type': row['pin_type'],
+                'geom': row['geometry']
+            })
+
+    for row in roads_rows:
+        if row['record_date'] in data_by_date:
+            data_by_date[row['record_date']]['roads'].append({
+                'id': row['cartodb_id'],
+                'status': row['status']
+            })
 
     # Format as a list sorted by newest date to oldest
-    result = [{'date': d['record_date'], 'pins': data_by_date[d['record_date']]} for d in dates_rows]
+    result = [{
+        'date': d['record_date'],
+        'pins': data_by_date[d['record_date']]['pins'],
+        'roads': data_by_date[d['record_date']]['roads']
+    } for d in dates_rows]
+
     return jsonify(result)
 
 

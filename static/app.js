@@ -168,9 +168,11 @@ function renderTimeline() {
         iconContainer.className = 'timeline-icons';
 
         const movedPins = new Set();
+        let roadChanged = false; // Flag to track if any road status changed
 
-        // LOGIC: Check if today's pins moved since yesterday
+        // LOGIC: Check if today's pins or roads moved/changed since yesterday
         if (yesterdayData) {
+            // Check Pins
             todayData.pins.forEach(todayPin => {
                 const matchFound = yesterdayData.pins.some(yesterdayPin =>
                     yesterdayPin.type === todayPin.type && yesterdayPin.geom === todayPin.geom
@@ -179,13 +181,26 @@ function renderTimeline() {
                     movedPins.add(todayPin.type);
                 }
             });
+
+            // Check Roads
+            todayData.roads.forEach(todayRoad => {
+                const yesterdayRoad = yesterdayData.roads.find(r => r.id === todayRoad.id);
+                // If the road didn't exist yesterday, or its status changed, flag it
+                if (!yesterdayRoad || yesterdayRoad.status !== todayRoad.status) {
+                    roadChanged = true;
+                }
+            });
+
         } else {
+            // If there is no "yesterday", treat everything as "new"
             todayData.pins.forEach(p => movedPins.add(p.type));
+            if (todayData.roads && todayData.roads.length > 0) roadChanged = true;
         }
 
-        // Draw icons based ONLY on the pins that moved/appeared
+        // Draw icons based ONLY on the items that moved/appeared/changed
         if (movedPins.has('hiker_biker')) iconContainer.innerHTML += '<span>🚴</span>';
         if (movedPins.has('winter_rec')) iconContainer.innerHTML += '<span>⛔️</span>';
+        if (roadChanged) iconContainer.innerHTML += '<span>🚧</span>'; // Construction barrier for road changes
 
         item.appendChild(iconContainer);
 
