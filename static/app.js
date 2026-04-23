@@ -142,12 +142,10 @@ function renderTimeline() {
 
         const item = document.createElement('div');
         item.className = `timeline-item ${date === availableDates[currentDateIndex] ? 'active' : ''}`;
-        item.innerText = date;
 
+        // 1. Create the icon container (using CSS for styling now)
         const iconContainer = document.createElement('div');
-        iconContainer.style.marginTop = '5px';
-        iconContainer.style.display = 'flex';
-        iconContainer.style.gap = '5px';
+        iconContainer.className = 'timeline-icons';
 
         const movedPins = new Set();
 
@@ -165,8 +163,7 @@ function renderTimeline() {
                 }
             });
         } else {
-            // If there is no "yesterday" (it's the oldest record in the DB),
-            // treat all pins as "new" so they show up.
+            // If there is no "yesterday", treat all pins as "new"
             todayData.pins.forEach(p => movedPins.add(p.type));
         }
 
@@ -174,9 +171,14 @@ function renderTimeline() {
         if (movedPins.has('hiker_biker')) iconContainer.innerHTML += '<span>🚴</span>';
         if (movedPins.has('winter_rec')) iconContainer.innerHTML += '<span>⛔️</span>';
 
-        if (iconContainer.innerHTML !== '') {
-            item.appendChild(iconContainer);
-        }
+        // Append the icons FIRST so they sit on top
+        item.appendChild(iconContainer);
+
+        // 2. Create the date element and append it LAST so it sits on the bottom
+        const dateSpan = document.createElement('div');
+        dateSpan.className = 'timeline-date';
+        dateSpan.innerText = date;
+        item.appendChild(dateSpan);
 
         item.onclick = () => loadDataForDate(date);
         timeline.appendChild(item);
