@@ -119,14 +119,34 @@ async function loadDataForDate(dateStr) {
 }
 
 function renderTimeline() {
+    const timelineContainer = document.getElementById('timeline-container');
     const timeline = document.getElementById('timeline');
     timeline.innerHTML = '';
 
-    // Grab our 30-day window
-    const startIdx = Math.max(0, currentDateIndex - 15);
-    const endIdx = Math.min(availableDates.length, startIdx + 30);
+    if (availableDates.length === 0) return;
 
-    // Create an array of the indices we want to render, and reverse it (older to newer left-to-right)
+    // 1. Calculate how many items can fit on screen
+    // Container width minus 40px for the container's left/right padding
+    const containerWidth = timelineContainer.clientWidth - 40;
+    // Each item is ~38px (25px min-width + 12px padding + 1px border)
+    const itemWidth = 38;
+    const maxItems = Math.max(1, Math.floor(containerWidth / itemWidth));
+
+    // 2. Try to center the current date
+    let startIdx = currentDateIndex - Math.floor(maxItems / 2);
+    let endIdx = startIdx + maxItems;
+
+    // 3. Shift the window if we hit the edges so the timeline stays completely full
+    if (startIdx < 0) {
+        startIdx = 0;
+        endIdx = Math.min(availableDates.length, maxItems);
+    }
+    if (endIdx > availableDates.length) {
+        endIdx = availableDates.length;
+        startIdx = Math.max(0, availableDates.length - maxItems);
+    }
+
+    // 4. Create the array of indices to render, reversing it so older dates are on the left
     const windowIndices = [];
     for(let i = startIdx; i < endIdx; i++) {
         windowIndices.push(i);
@@ -143,7 +163,7 @@ function renderTimeline() {
         const item = document.createElement('div');
         item.className = `timeline-item ${date === availableDates[currentDateIndex] ? 'active' : ''}`;
 
-        // 1. Create the icon container (using CSS for styling now)
+        // 1. Create the icon container
         const iconContainer = document.createElement('div');
         iconContainer.className = 'timeline-icons';
 
@@ -152,18 +172,14 @@ function renderTimeline() {
         // LOGIC: Check if today's pins moved since yesterday
         if (yesterdayData) {
             todayData.pins.forEach(todayPin => {
-                // Try to find a pin from yesterday with the exact same type and coordinates
                 const matchFound = yesterdayData.pins.some(yesterdayPin =>
                     yesterdayPin.type === todayPin.type && yesterdayPin.geom === todayPin.geom
                 );
-
-                // If no match is found, this pin is new or moved!
                 if (!matchFound) {
                     movedPins.add(todayPin.type);
                 }
             });
         } else {
-            // If there is no "yesterday", treat all pins as "new"
             todayData.pins.forEach(p => movedPins.add(p.type));
         }
 
@@ -171,10 +187,9 @@ function renderTimeline() {
         if (movedPins.has('hiker_biker')) iconContainer.innerHTML += '<span>🚴</span>';
         if (movedPins.has('winter_rec')) iconContainer.innerHTML += '<span>⛔️</span>';
 
-        // Append the icons FIRST so they sit on top
         item.appendChild(iconContainer);
 
-        // 2. Create the date element and append it LAST so it sits on the bottom
+        // 2. Create the date element
         const dateSpan = document.createElement('div');
         dateSpan.className = 'timeline-date';
         dateSpan.innerText = date;
@@ -208,5 +223,7 @@ document.addEventListener('keydown', (e) => {
     if (e.key === 'ArrowLeft') document.getElementById('btnPrev').click();
     if (e.key === 'ArrowRight') document.getElementById('btnNext').click();
 });
+
+window.addEventListener('resize', renderTimeline);
 
 init();
