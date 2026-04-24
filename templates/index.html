@@ -1,12 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Glacier NP Historical Map</title>
     <link rel="stylesheet" href="/static/vendor/leaflet/leaflet.css" />
     <link rel="stylesheet" href="/static/vendor/flatpickr/flatpickr.min.css">
-
     <link rel="stylesheet" href="/static/style.css">
     <link rel="icon" href="/static/favicon.png" type="image/x-icon">
 </head>
@@ -19,11 +15,11 @@
 
         <div class="filters">
             <span id="statusDisplay" style="color: #999; align-self: center; margin-right: 15px;">Loading...</span>
-
             <label><input type="checkbox" id="filterRoads" checked> Roads</label>
             <label><input type="checkbox" id="filterHikers" checked> Hiker/Biker</label>
             <label><input type="checkbox" id="filterHazards" checked> Hazards</label>
             <label><input type="checkbox" id="filterChangesOnly"> Changes Only</label>
+            <span id="helpIcon" class="help-icon" title="Keyboard Shortcuts">?</span>
         </div>
     </div>
 
@@ -35,9 +31,22 @@
         <div id="timeline"></div>
     </div>
 
+    <div id="helpModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3>Keyboard Shortcuts</h3>
+            <ul>
+                <li><kbd>R</kbd> - Toggle Roads</li>
+                <li><kbd>B</kbd> - Toggle Hiker/Biker</li>
+                <li><kbd>H</kbd> - Toggle Hazards</li>
+                <li><kbd>C</kbd> - Toggle 'Changes Only'</li>
+                <li><kbd>?</kbd> - Show this Help menu</li>
+                <li><kbd>&larr;</kbd> / <kbd>&rarr;</kbd> - Previous / Next Day</li>
+            </ul>
+        </div>
+    </div>
+
     <script src="/static/vendor/leaflet/leaflet.js"></script>
     <script src="/static/vendor/flatpickr/flatpickr.min.js"></script>
-
     <script src="/static/app.js"></script>
 </body>
 </html>

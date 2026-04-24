@@ -288,9 +288,72 @@ document.querySelectorAll('.filters input').forEach(cb => {
     cb.addEventListener('change', () => loadDataForDate(availableDates[currentDateIndex]));
 });
 
+// --- Modal and Keyboard Shortcut Logic ---
+
+const helpModal = document.getElementById('helpModal');
+const helpIcon = document.getElementById('helpIcon');
+
+// Toggle modal visibility
+function toggleHelp() {
+    helpModal.classList.toggle('hidden');
+}
+
+// Click icon to open
+helpIcon.addEventListener('click', toggleHelp);
+
+// Click outside modal content to close
+helpModal.addEventListener('click', (e) => {
+    if (e.target === helpModal) {
+        helpModal.classList.add('hidden');
+    }
+});
+
+// A helper function to toggle a checkbox and trigger its change event
+function toggleCheckbox(id) {
+    const cb = document.getElementById(id);
+    if (cb) {
+        cb.checked = !cb.checked;
+        cb.dispatchEvent(new Event('change'));
+    }
+}
+
+// Global Keyboard Shortcuts
 document.addEventListener('keydown', (e) => {
-    if (e.key === 'ArrowLeft') document.getElementById('btnPrev').click();
-    if (e.key === 'ArrowRight') document.getElementById('btnNext').click();
+    // Ignore keystrokes if the user is typing inside the date input
+    if (e.target.tagName.toLowerCase() === 'input') return;
+
+    const key = e.key.toLowerCase();
+    let triggeredShortcut = false;
+
+    if (e.key === 'ArrowLeft') {
+        document.getElementById('btnPrev').click();
+        triggeredShortcut = true;
+    } else if (e.key === 'ArrowRight') {
+        document.getElementById('btnNext').click();
+        triggeredShortcut = true;
+    } else if (key === 'r') {
+        toggleCheckbox('filterRoads');
+        triggeredShortcut = true;
+    } else if (key === 'b') {
+        toggleCheckbox('filterHikers');
+        triggeredShortcut = true;
+    } else if (key === 'h') { // Using Z for Hazards
+        toggleCheckbox('filterHazards');
+        triggeredShortcut = true;
+    } else if (key === 'c') {
+        toggleCheckbox('filterChangesOnly');
+        triggeredShortcut = true;
+    } else if (e.key === '?') {
+        toggleHelp();
+        return; // Return early so the auto-close logic below doesn't hide it immediately
+    } else if (e.key === 'Escape') {
+        helpModal.classList.add('hidden');
+    }
+
+    // Auto-close the help menu if any mapped shortcut is pressed while it's open
+    if (triggeredShortcut && !helpModal.classList.contains('hidden')) {
+        helpModal.classList.add('hidden');
+    }
 });
 
 window.addEventListener('resize', renderTimeline);

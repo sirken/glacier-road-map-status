@@ -105,3 +105,77 @@ body, html {
     gap: 10px;
     margin-left: auto;
 }
+
+/* --- Help Icon & Modal Styles --- */
+
+.help-icon {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    width: 20px;
+    height: 20px;
+    background: #3498db;
+    color: white;
+    border-radius: 50%;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-left: 5px;
+    user-select: none;
+}
+
+.help-icon:hover {
+    background: #2980b9;
+}
+
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+.modal-overlay.hidden {
+    display: none;
+}
+
+.modal-content {
+    background: white;
+    padding: 25px 40px;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    color: #333;
+}
+
+.modal-content h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+}
+
+.modal-content ul {
+    list-style-type: none;
+    padding: 0;
+    line-height: 2;
+    margin: 0;
+}
+
+kbd {
+    background: #eee;
+    padding: 3px 6px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-family: monospace;
+    font-weight: bold;
+    margin-right: 5px;
+}
+
+.modal-hint {
+    font-size: 0.85em;
+    color: #7f8c8d;
+    margin-top: 20px;
+    margin-bottom: 0;
+    text-align: center;
+}
