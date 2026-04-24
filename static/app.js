@@ -337,6 +337,7 @@ document.addEventListener('keydown', (e) => {
     const key = e.key.toLowerCase();
     let triggeredShortcut = false;
 
+    // Timeline Navigation
     if (e.key === 'ArrowLeft') {
         document.getElementById('btnPrev').click();
         triggeredShortcut = true;
@@ -346,6 +347,28 @@ document.addEventListener('keydown', (e) => {
     } else if (key === 't') {
         document.getElementById('btnToday').click();
         triggeredShortcut = true;
+
+    // Map Navigation (WASD + Zoom)
+    } else if (key === 'w') {
+        map.panBy([0, -150]); // Move up 150px
+        triggeredShortcut = true;
+    } else if (key === 's') {
+        map.panBy([0, 150]);  // Move down 150px
+        triggeredShortcut = true;
+    } else if (key === 'a') {
+        map.panBy([-150, 0]); // Move left 150px
+        triggeredShortcut = true;
+    } else if (key === 'd') {
+        map.panBy([150, 0]);  // Move right 150px
+        triggeredShortcut = true;
+    } else if (key === 'q' || key === '-' || key === '_') {
+        map.zoomOut();
+        triggeredShortcut = true;
+    } else if (key === 'e' || key === '=' || key === '+') {
+        map.zoomIn();
+        triggeredShortcut = true;
+
+    // Filter Toggles
     } else if (key === 'r') {
         toggleCheckbox('filterRoads');
         triggeredShortcut = true;
@@ -358,6 +381,8 @@ document.addEventListener('keydown', (e) => {
     } else if (key === 'c') {
         toggleCheckbox('filterChangesOnly');
         triggeredShortcut = true;
+
+    // UI Controls
     } else if (e.key === '?') {
         toggleHelp();
         return; // Return early so the auto-close logic below doesn't hide it immediately
