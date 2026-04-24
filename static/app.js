@@ -288,11 +288,11 @@ document.getElementById('btnToday').onclick = () => {
     const day = String(today.getDate()).padStart(2, '0');
     const todayStr = `${year}-${month}-${day}`;
 
-    // 2. Try to load it, or warn the user if today isn't in the database yet
+    // 2. Try to load it, or show the custom modal if missing
     if (availableDates.includes(todayStr)) {
         loadDataForDate(todayStr);
     } else {
-        alert(`No data in the database for today (${todayStr}). Run your update script!`);
+        showAlert(`No data in the database for today (${todayStr}). Run your update script!`);
     }
 };
 
@@ -304,6 +304,15 @@ document.querySelectorAll('.filters input').forEach(cb => {
 
 const helpModal = document.getElementById('helpModal');
 const helpIcon = document.getElementById('helpIcon');
+
+const alertModal = document.getElementById('alertModal');
+const alertMessage = document.getElementById('alertMessage');
+
+// Function to show custom alert
+function showAlert(message) {
+    alertMessage.innerText = message;
+    alertModal.classList.remove('hidden');
+}
 
 // Toggle modal visibility
 function toggleHelp() {
@@ -318,6 +327,9 @@ helpModal.addEventListener('click', (e) => {
     if (e.target === helpModal) {
         helpModal.classList.add('hidden');
     }
+});
+alertModal.addEventListener('click', (e) => {
+    if (e.target === alertModal) alertModal.classList.add('hidden');
 });
 
 // A helper function to toggle a checkbox and trigger its change event
@@ -385,14 +397,16 @@ document.addEventListener('keydown', (e) => {
     // UI Controls
     } else if (e.key === '?') {
         toggleHelp();
-        return; // Return early so the auto-close logic below doesn't hide it immediately
+        return;
     } else if (e.key === 'Escape') {
         helpModal.classList.add('hidden');
+        alertModal.classList.add('hidden'); // Dismiss alert on Escape
     }
 
-    // Auto-close the help menu if any mapped shortcut is pressed while it's open
-    if (triggeredShortcut && !helpModal.classList.contains('hidden')) {
-        helpModal.classList.add('hidden');
+    // Auto-close ANY open modal if a mapped shortcut is pressed
+    if (triggeredShortcut) {
+        if (!helpModal.classList.contains('hidden')) helpModal.classList.add('hidden');
+        if (!alertModal.classList.contains('hidden')) alertModal.classList.add('hidden');
     }
 });
 
