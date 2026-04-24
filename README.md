@@ -1,9 +1,6 @@
 # glacier-road-map-status
 Get daily glacier road status, hiker/biker icons and save to a local sqlite DB so we can see changes over time
 
-## TODO
-- Download leaflet and flapicker JS/css files for offline
-
 ## Features
 
 - Daily retrieve new geojson data
