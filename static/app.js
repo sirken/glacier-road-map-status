@@ -406,7 +406,11 @@ document.addEventListener('keydown', (e) => {
     // Auto-close ANY open modal if a mapped shortcut is pressed
     if (triggeredShortcut) {
         if (!helpModal.classList.contains('hidden')) helpModal.classList.add('hidden');
-        if (!alertModal.classList.contains('hidden')) alertModal.classList.add('hidden');
+
+        // Prevent the 'T' key from instantly hiding the alert it just opened
+        if (key !== 't' && !alertModal.classList.contains('hidden')) {
+            alertModal.classList.add('hidden');
+        }
     }
 });
 
