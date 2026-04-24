@@ -168,7 +168,7 @@ function renderTimeline() {
         iconContainer.className = 'timeline-icons';
 
         const movedPins = new Set();
-        let roadChanged = false; // Flag to track if any road status changed
+        let roadChanged = false;
 
         // LOGIC: Check if today's pins or roads moved/changed since yesterday
         if (yesterdayData) {
@@ -191,16 +191,15 @@ function renderTimeline() {
                 }
             });
 
-        } else {
-            // If there is no "yesterday", treat everything as "new"
-            todayData.pins.forEach(p => movedPins.add(p.type));
-            if (todayData.roads && todayData.roads.length > 0) roadChanged = true;
         }
+        // We removed the 'else' block!
+        // Now, if there is no 'yesterday' to compare against (the oldest date),
+        // it simply won't flag any changes or draw any icons.
 
         // Draw icons based ONLY on the items that moved/appeared/changed
         if (movedPins.has('hiker_biker')) iconContainer.innerHTML += '<span>🚴</span>';
         if (movedPins.has('winter_rec')) iconContainer.innerHTML += '<span>⛔️</span>';
-        if (roadChanged) iconContainer.innerHTML += '<span>🚧</span>'; // Construction barrier for road changes
+        if (roadChanged) iconContainer.innerHTML += '<span>🚧</span>';
 
         item.appendChild(iconContainer);
 
