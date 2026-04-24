@@ -59,9 +59,8 @@ async function init() {
     if (availableDates.length > 0) {
         loadDataForDate(availableDates[0]);
 
-        // Initialize Flatpickr HERE, passing in our availableDates array
         flatpickr("#datePicker", {
-            enable: availableDates, // This is the magic line!
+            enable: availableDates,
             dateFormat: "Y-m-d",
             defaultDate: availableDates[0],
             onChange: function(selectedDates, dateStr, instance) {
@@ -70,16 +69,15 @@ async function init() {
         });
 
     } else {
-        document.getElementById('currentDateDisplay').innerText = "No data in database. Run fetch_data.py!";
+        // Restored this to update the new status element
+        document.getElementById('statusDisplay').innerText = "No data in database.";
     }
 }
 
 async function loadDataForDate(dateStr) {
-    document.getElementById('currentDateDisplay').innerText = "Date: " + dateStr;
-    // Check if flatpickr is initialized, then update it
     const dp = document.getElementById('datePicker')._flatpickr;
     if (dp) {
-        dp.setDate(dateStr, false); // false prevents triggering onChange again
+        dp.setDate(dateStr, false);
     }
     currentDateIndex = availableDates.indexOf(dateStr);
 
@@ -91,9 +89,58 @@ async function loadDataForDate(dateStr) {
     const showRoads = document.getElementById('filterRoads').checked;
     const showHikers = document.getElementById('filterHikers').checked;
     const showHazards = document.getElementById('filterHazards').checked;
+    const showOnlyChanges = document.getElementById('filterChangesOnly').checked;
+
+    // Get today's and yesterday's timeline data
+    const todayTimeline = timelineData[currentDateIndex];
+    const yesterdayData = timelineData[currentDateIndex + 1];
+
+    // --- NEW CHANGE CALCULATION LOGIC ---
+    let changedPinsCount = 0;
+    let changedRoadsCount = 0;
+
+    if (yesterdayData) {
+        // Count Pin Changes
+        todayTimeline.pins.forEach(todayPin => {
+            const matchFound = yesterdayData.pins.some(yPin => yPin.type === todayPin.type && yPin.geom === todayPin.geom);
+            if (!matchFound) changedPinsCount++;
+        });
+
+        // Count Road Changes
+        todayTimeline.roads.forEach(todayRoad => {
+            const yRoad = yesterdayData.roads.find(r => r.id === todayRoad.id);
+            if (!yRoad || yRoad.status !== todayRoad.status) changedRoadsCount++;
+        });
+    }
+
+    // Format the status string
+    let statusText = "No changes";
+    if (!yesterdayData) {
+        statusText = "Baseline date (no previous data)";
+    } else if (changedPinsCount > 0 || changedRoadsCount > 0) {
+        let parts = [];
+
+        if (changedPinsCount === 1) parts.push("1 pin moved");
+        else if (changedPinsCount > 1) parts.push(`${changedPinsCount} pins moved`);
+
+        if (changedRoadsCount === 1) parts.push("1 road segment change");
+        else if (changedRoadsCount > 1) parts.push(`${changedRoadsCount} road segment changes`);
+
+        statusText = parts.join(' and ');
+    }
+
+    // Update the UI
+    document.getElementById('statusDisplay').innerText = statusText;
+    // -------------------------------------
 
     if (showRoads) {
         data.roads.forEach(road => {
+            if (showOnlyChanges) {
+                if (!yesterdayData) return;
+                const yesterdayRoad = yesterdayData.roads.find(r => r.id === road.cartodb_id);
+                if (yesterdayRoad && yesterdayRoad.status === road.status) return;
+            }
+
             const geojson = JSON.parse(road.geometry);
             const color = road.status === 'open' ? 'green' : (road.status === 'closed' ? 'red' : 'orange');
 
@@ -106,6 +153,14 @@ async function loadDataForDate(dateStr) {
     data.pins.forEach(pin => {
         if (!showHazards && pin.pin_type === 'winter_rec') return;
         if (!showHikers && pin.pin_type === 'hiker_biker') return;
+
+        if (showOnlyChanges) {
+            if (!yesterdayData) return;
+            const matchFound = yesterdayData.pins.some(yesterdayPin =>
+                yesterdayPin.type === pin.pin_type && yesterdayPin.geom === pin.geometry
+            );
+            if (matchFound) return;
+        }
 
         const geojson = JSON.parse(pin.geometry);
         L.geoJSON(geojson, {

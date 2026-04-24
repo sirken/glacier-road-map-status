@@ -17,11 +17,13 @@
         <button id="btnNext">Next Day &rarr;</button>
 
         <div class="filters">
+            <span id="statusDisplay" style="color: #999; align-self: center; margin-right: 15px;">Loading...</span>
+
             <label><input type="checkbox" id="filterRoads" checked> Roads</label>
             <label><input type="checkbox" id="filterHikers" checked> Hiker/Biker</label>
             <label><input type="checkbox" id="filterHazards" checked> Hazards</label>
+            <label><input type="checkbox" id="filterChangesOnly"> Changes Only</label>
         </div>
-        <span id="currentDateDisplay">Loading...</span>
     </div>
 
     <div id="map-container">
