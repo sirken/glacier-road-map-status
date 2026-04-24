@@ -108,34 +108,34 @@ def generate_dummy_data():
     start_date = datetime.date.today() - datetime.timedelta(days=44)
     now = datetime.datetime.now().isoformat()
 
-    print("\nGenerating 45 days of timeline data...")
+    print("\nGenerating 60 days of timeline data...")
 
-    for i in range(45):
+    for i in range(60):
         sim_date = (start_date + datetime.timedelta(days=i)).isoformat()
 
         # 20% chance of a "jackpot" mutation event
         if random.random() < 0.20:
             print(f"  --> Jackpot hit on {sim_date}!")
 
-            # 50% chance to modify pins
-            if random.random() < 0.50:
-                # 50% chance for each group to be selected for moving
-                move_hiker = random.random() < 0.50
-                move_hazard = random.random() < 0.50
+            # 60% chance to modify pins
+            if random.random() < 0.60:
+                # 70% chance for each group to be selected for moving
+                move_hiker = random.random() < 0.70
+                move_hazard = random.random() < 0.70
 
                 print(f"      - Moving pins (Hiker/Biker: {move_hiker}, Hazard: {move_hazard})...")
 
                 for pin in current_pins:
                     if pin['geometry']['type'] == 'Point':
-                        # Only move if the specific group's 50% chance hit
+                        # Only move if the specific group's % chance hit
                         if (pin['pin_type'] == 'hiker_biker' and move_hiker) or \
                             (pin['pin_type'] == 'winter_rec' and move_hazard):
                             # Shift coordinates by a random distance
                             pin['geometry']['coordinates'][0] += random.uniform(-0.03, 0.03)
                             pin['geometry']['coordinates'][1] += random.uniform(-0.03, 0.03)
 
-            # 50% chance to modify roads
-            if random.random() < 0.50:
+            # 60% chance to modify roads
+            if random.random() < 0.60:
                 # Pick 1 to 5 random roads to flip their status
                 num_to_flip = random.randint(1, 5)
                 roads_to_flip = random.sample(current_roads, min(num_to_flip, len(current_roads)))
