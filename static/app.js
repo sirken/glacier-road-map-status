@@ -343,13 +343,16 @@ document.addEventListener('keydown', (e) => {
     } else if (e.key === 'ArrowRight') {
         document.getElementById('btnNext').click();
         triggeredShortcut = true;
+    } else if (key === 't') {
+        document.getElementById('btnToday').click();
+        triggeredShortcut = true;
     } else if (key === 'r') {
         toggleCheckbox('filterRoads');
         triggeredShortcut = true;
-    } else if (key === 'b') {
+    } else if (key === 'h') {
         toggleCheckbox('filterHikers');
         triggeredShortcut = true;
-    } else if (key === 'h') { // Using Z for Hazards
+    } else if (key === 'z') {
         toggleCheckbox('filterHazards');
         triggeredShortcut = true;
     } else if (key === 'c') {
