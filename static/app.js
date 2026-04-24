@@ -281,7 +281,19 @@ document.getElementById('btnNext').onclick = () => {
 };
 
 document.getElementById('btnToday').onclick = () => {
-    if (availableDates.length > 0) loadDataForDate(availableDates[0]);
+    // 1. Get the actual current date
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    const todayStr = `${year}-${month}-${day}`;
+
+    // 2. Try to load it, or warn the user if today isn't in the database yet
+    if (availableDates.includes(todayStr)) {
+        loadDataForDate(todayStr);
+    } else {
+        alert(`No data in the database for today (${todayStr}). Run your update script!`);
+    }
 };
 
 document.querySelectorAll('.filters input').forEach(cb => {
