@@ -26,22 +26,31 @@ def init_db():
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
 
-    # Added id and created_at
+    c.execute('''CREATE TABLE IF NOT EXISTS fetch_log (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        fetch_date TEXT UNIQUE
+    )''')
+
     c.execute('''CREATE TABLE IF NOT EXISTS road_status (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         created_at TEXT,
-        record_date TEXT, cartodb_id INTEGER, rdname TEXT, 
-        rdsurface TEXT, seasdesc TEXT, maintainer TEXT, 
+        record_date TEXT, cartodb_id INTEGER, rdname TEXT,
+        rdsurface TEXT, seasdesc TEXT, maintainer TEXT,
         status TEXT, reason TEXT, geometry TEXT
     )''')
 
-    # Added id and created_at
     c.execute('''CREATE TABLE IF NOT EXISTS pin_status (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         created_at TEXT,
-        record_date TEXT, pin_type TEXT, cartodb_id INTEGER, 
+        record_date TEXT, pin_type TEXT, cartodb_id INTEGER,
         name TEXT, description TEXT, status TEXT, geometry TEXT
     )''')
+
+    # Backfill fetch_log from any existing data
+    c.execute('''INSERT OR IGNORE INTO fetch_log (fetch_date)
+                 SELECT DISTINCT record_date FROM road_status
+                 UNION
+                 SELECT DISTINCT record_date FROM pin_status''')
 
     conn.commit()
     return conn
@@ -49,23 +58,50 @@ def init_db():
 
 def fetch_and_store(conn):
     today = datetime.date.today().isoformat()
-    now = datetime.datetime.now().isoformat()  # Exact timestamp
+    now = datetime.datetime.now().isoformat()
     c = conn.cursor()
+
+    # Always record that we fetched today, even if nothing changed
+    c.execute('INSERT OR IGNORE INTO fetch_log (fetch_date) VALUES (?)', (today,))
+
+    # Load the most recent stored record for each road so we can skip unchanged ones
+    last_roads = {}
+    for row in c.execute('''
+        SELECT cartodb_id, status, reason, geometry FROM road_status
+        WHERE id IN (SELECT MAX(id) FROM road_status GROUP BY cartodb_id)
+    ''').fetchall():
+        last_roads[row[0]] = (row[1], row[2], row[3])
+
+    roads_saved = 0
+    roads_skipped = 0
 
     for url in URLS['road_nds']:
         try:
             data = requests.get(url, verify=False).json()
             for feature in data.get('features', []):
                 geom = feature.get('geometry')
-                if not geom: continue  # Skip null geometries
+                if not geom:
+                    continue
 
-                c.execute('''INSERT INTO road_status 
-                             (created_at, record_date, cartodb_id, rdname, rdsurface, seasdesc, maintainer, status, reason, geometry) 
+                cid = feature['properties'].get('cartodb_id')
+                status = feature['properties'].get('status')
+                reason = feature['properties'].get('reason')
+                geom_str = json.dumps(geom)
+
+                # Skip if this road's status/reason/geometry hasn't changed
+                if cid in last_roads:
+                    last_status, last_reason, last_geom = last_roads[cid]
+                    if last_status == status and last_reason == reason and last_geom == geom_str:
+                        roads_skipped += 1
+                        continue
+
+                c.execute('''INSERT INTO road_status
+                             (created_at, record_date, cartodb_id, rdname, rdsurface, seasdesc, maintainer, status, reason, geometry)
                              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
-                          (now, today, feature['properties'].get('cartodb_id'), feature['properties'].get('rdname'),
+                          (now, today, cid, feature['properties'].get('rdname'),
                            feature['properties'].get('rdsurface'), feature['properties'].get('seasdesc'),
-                           feature['properties'].get('maintainer'), feature['properties'].get('status'),
-                           feature['properties'].get('reason'), json.dumps(geom)))
+                           feature['properties'].get('maintainer'), status, reason, geom_str))
+                roads_saved += 1
         except Exception as e:
             print(f"Error fetching road data: {e}")
 
@@ -74,10 +110,11 @@ def fetch_and_store(conn):
             data = requests.get(url, verify=False).json()
             for feature in data.get('features', []):
                 geom = feature.get('geometry')
-                if not geom: continue  # Skip null geometries
+                if not geom:
+                    continue
 
-                c.execute('''INSERT INTO pin_status 
-                             (created_at, record_date, pin_type, cartodb_id, name, description, status, geometry) 
+                c.execute('''INSERT INTO pin_status
+                             (created_at, record_date, pin_type, cartodb_id, name, description, status, geometry)
                              VALUES (?, ?, ?, ?, ?, ?, ?, ?)''',
                           (now, today, pin_type, feature['properties'].get('cartodb_id'),
                            feature['properties'].get('name'),
@@ -87,7 +124,7 @@ def fetch_and_store(conn):
             print(f"Error fetching pin data for {pin_type}: {e}")
 
     conn.commit()
-    print(f"Data for {today} successfully saved at {now}.")
+    print(f"Data for {today} saved at {now}. Roads: {roads_saved} new, {roads_skipped} unchanged.")
 
 
 if __name__ == "__main__":
