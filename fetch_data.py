@@ -105,6 +105,9 @@ def fetch_and_store(conn):
         except Exception as e:
             print(f"Error fetching road data: {e}")
 
+    # Wipe today's pin records before re-inserting so re-runs don't duplicate rows
+    c.execute('DELETE FROM pin_status WHERE record_date = ?', (today,))
+
     for pin_type, url in URLS['pins'].items():
         try:
             data = requests.get(url, verify=False).json()
