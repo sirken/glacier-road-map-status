@@ -4,6 +4,7 @@ import json
 import datetime
 import random
 import copy
+import os
 import urllib3
 
 # Suppress the insecure request warnings
@@ -30,18 +31,23 @@ def init_db():
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
 
+    c.execute('''CREATE TABLE IF NOT EXISTS fetch_log (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        fetch_date TEXT UNIQUE
+    )''')
+
     c.execute('''CREATE TABLE IF NOT EXISTS road_status (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         created_at TEXT,
-        record_date TEXT, cartodb_id INTEGER, rdname TEXT, 
-        rdsurface TEXT, seasdesc TEXT, maintainer TEXT, 
+        record_date TEXT, cartodb_id INTEGER, rdname TEXT,
+        rdsurface TEXT, seasdesc TEXT, maintainer TEXT,
         status TEXT, reason TEXT, geometry TEXT
     )''')
 
     c.execute('''CREATE TABLE IF NOT EXISTS pin_status (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         created_at TEXT,
-        record_date TEXT, pin_type TEXT, cartodb_id INTEGER, 
+        record_date TEXT, pin_type TEXT, cartodb_id INTEGER,
         name TEXT, description TEXT, status TEXT, geometry TEXT
     )''')
 
@@ -95,6 +101,11 @@ def fetch_base_data():
 
 
 def generate_dummy_data():
+    if os.path.exists(DB_FILE):
+        backup = DB_FILE.replace('.db', f'_{datetime.datetime.now().strftime("%Y%m%d-%H%M")}.db')
+        os.rename(DB_FILE, backup)
+        print(f"Renamed existing DB to {backup}")
+
     db_conn = init_db()
     c = db_conn.cursor()
 
@@ -108,10 +119,15 @@ def generate_dummy_data():
     start_date = datetime.date.today() - datetime.timedelta(days=44)
     now = datetime.datetime.now().isoformat()
 
+    # Track last stored state for each road so we only write rows on change
+    last_stored_roads = {}  # cartodb_id -> (status, reason, geometry_str)
+
     print("\nGenerating 60 days of timeline data...")
 
     for i in range(60):
         sim_date = (start_date + datetime.timedelta(days=i)).isoformat()
+
+        c.execute('INSERT OR IGNORE INTO fetch_log (fetch_date) VALUES (?)', (sim_date,))
 
         # 20% chance of a "jackpot" mutation event
         if random.random() < 0.20:
@@ -119,7 +135,6 @@ def generate_dummy_data():
 
             # 60% chance to modify pins
             if random.random() < 0.60:
-                # 70% chance for each group to be selected for moving
                 move_hiker = random.random() < 0.70
                 move_hazard = random.random() < 0.70
 
@@ -127,36 +142,48 @@ def generate_dummy_data():
 
                 for pin in current_pins:
                     if pin['geometry']['type'] == 'Point':
-                        # Only move if the specific group's % chance hit
                         if (pin['pin_type'] == 'hiker_biker' and move_hiker) or \
-                            (pin['pin_type'] == 'winter_rec' and move_hazard):
-                            # Shift coordinates by a random distance
+                                (pin['pin_type'] == 'winter_rec' and move_hazard):
                             pin['geometry']['coordinates'][0] += random.uniform(-0.03, 0.03)
                             pin['geometry']['coordinates'][1] += random.uniform(-0.03, 0.03)
 
             # 60% chance to modify roads
             if random.random() < 0.60:
-                # Pick 1 to 5 random roads to flip their status
                 num_to_flip = random.randint(1, 5)
                 roads_to_flip = random.sample(current_roads, min(num_to_flip, len(current_roads)))
                 print(f"      - Toggling {len(roads_to_flip)} road segment statuses...")
                 for r in roads_to_flip:
                     r['status'] = 'open' if r['status'] in ['closed', 'construction'] else 'closed'
 
-        # Insert the current state for this simulated date
+        # Roads: only store a row when status/reason/geometry changed (sparse storage)
+        roads_saved = 0
+        roads_skipped = 0
         for r in current_roads:
-            c.execute('''INSERT INTO road_status 
-                         (created_at, record_date, cartodb_id, rdname, rdsurface, seasdesc, maintainer, status, reason, geometry) 
+            cid = r['cartodb_id']
+            geom_str = json.dumps(r['geometry'])
+            if cid in last_stored_roads:
+                last_status, last_reason, last_geom = last_stored_roads[cid]
+                if last_status == r['status'] and last_reason == r['reason'] and last_geom == geom_str:
+                    roads_skipped += 1
+                    continue
+            c.execute('''INSERT INTO road_status
+                         (created_at, record_date, cartodb_id, rdname, rdsurface, seasdesc, maintainer, status, reason, geometry)
                          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
-                      (now, sim_date, r['cartodb_id'], r['rdname'], r['rdsurface'],
-                       r['seasdesc'], r['maintainer'], r['status'], r['reason'], json.dumps(r['geometry'])))
+                      (now, sim_date, cid, r['rdname'], r['rdsurface'],
+                       r['seasdesc'], r['maintainer'], r['status'], r['reason'], geom_str))
+            last_stored_roads[cid] = (r['status'], r['reason'], geom_str)
+            roads_saved += 1
 
+        # Pins: daily snapshot, wipe before insert so re-runs stay idempotent
+        c.execute('DELETE FROM pin_status WHERE record_date = ?', (sim_date,))
         for p in current_pins:
-            c.execute('''INSERT INTO pin_status 
-                         (created_at, record_date, pin_type, cartodb_id, name, description, status, geometry) 
+            c.execute('''INSERT INTO pin_status
+                         (created_at, record_date, pin_type, cartodb_id, name, description, status, geometry)
                          VALUES (?, ?, ?, ?, ?, ?, ?, ?)''',
                       (now, sim_date, p['pin_type'], p['cartodb_id'], p['name'],
                        p['description'], p['status'], json.dumps(p['geometry'])))
+
+        print(f"  {sim_date}: {roads_saved} roads saved, {roads_skipped} unchanged")
 
     db_conn.commit()
     db_conn.close()
