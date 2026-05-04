@@ -70,10 +70,6 @@ Development script to copy the DB from an external server
 ### `generate_dummy_data.py`
 Development script to generate sample data to populate the timeline
 
-> [!WARNING]
-> Will overwrite `glacier_data.db`
-
-
 ```shell
 uv run generate_dummy_data.py
 ```
