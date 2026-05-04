@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# If .db file is stored on an external server, copy it here
+
 source .env
 
 src="glacier_data.db"

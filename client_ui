@@ -2,4 +2,4 @@
 
 # ./update_db
 
-uv run app.py
+uv run python manage.py runserver

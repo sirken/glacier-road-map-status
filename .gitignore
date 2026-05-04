@@ -1,0 +1,21 @@
+# Virtual environments
+.venv/
+env/
+venv/
+
+# uv
+uv.lock
+
+# Django
+*.pyc
+__pycache__/
+db.sqlite3
+
+# Database files
+*.db
+
+# Environment
+.env
+
+# IDE
+.idea/
