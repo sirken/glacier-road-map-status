@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <title>Glacier Road Status</title>
     <link rel="stylesheet" href="/static/vendor/leaflet/leaflet.css" />
     <link rel="stylesheet" href="/static/vendor/flatpickr/flatpickr.min.css">
     <link rel="stylesheet" href="/static/style.css">
@@ -10,15 +11,16 @@
     <div id="controls">
         <input type="date" id="datePicker">
         <button id="btnToday">Today</button>
-        <button id="btnPrev">&larr; Prev Day</button>
-        <button id="btnNext">Next Day &rarr;</button>
+        <button id="btnPrev">&larr; Prev</button>
+        <button id="btnNext">Next &rarr;</button>
 
         <div class="filters">
-            <span id="statusDisplay" style="color: #999; align-self: center; margin-right: 15px;">Loading...</span>
-            <label><input type="checkbox" id="filterRoads" checked> <u>R</u>oads</label>
-            <label><input type="checkbox" id="filterHikers" checked> <u>H</u>iker/Biker</label>
-            <label><input type="checkbox" id="filterHazards" checked> Ha<u>z</u>ards</label>
-            <label><input type="checkbox" id="filterChangesOnly"> <u>C</u>hanges Only</label>
+            <span id="statusDisplay">Loading...</span>
+            <div class="ctrl-sep"></div>
+            <label><input type="checkbox" id="filterRoads" checked> <span><u>R</u>oads</span></label>
+            <label><input type="checkbox" id="filterHikers" checked> <span><u>H</u>iker/Biker</span></label>
+            <label><input type="checkbox" id="filterHazards" checked> <span>Ha<u>z</u>ards</span></label>
+            <label><input type="checkbox" id="filterChangesOnly"> <span><u>C</u>hanges Only</span></label>
             <span id="helpIcon" class="help-icon" title="Keyboard Shortcuts">?</span>
         </div>
     </div>

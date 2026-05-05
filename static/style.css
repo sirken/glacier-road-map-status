@@ -1,26 +1,147 @@
+*, *::before, *::after { box-sizing: border-box; }
+
 body, html {
     margin: 0;
     padding: 0;
     height: 100%;
-    font-family: Arial, sans-serif;
+    overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
     display: flex;
     flex-direction: column;
+    background: #0f172a;
 }
+
+/* ── Controls bar ─────────────────────────────────────────────────────────── */
 
 #controls {
-    height: 50px;
-    background: #f8f9fa;
+    height: 52px;
+    flex-shrink: 0;
+    background: #1e293b;
     display: flex;
     align-items: center;
-    padding: 0 20px;
-    gap: 15px;
-    border-bottom: 1px solid #ccc;
+    padding: 0 16px;
+    gap: 8px;
+    border-bottom: 1px solid #334155;
 }
 
+.app-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #f1f5f9;
+    letter-spacing: 0.3px;
+    margin-right: 4px;
+    white-space: nowrap;
+}
+
+.ctrl-sep {
+    width: 1px;
+    height: 22px;
+    background: #334155;
+    margin: 0 4px;
+    flex-shrink: 0;
+}
+
+/* Date input (also targets flatpickr's replacement input) */
+#datePicker,
+.flatpickr-input {
+    background: #334155;
+    border: 1px solid #475569;
+    color: #f1f5f9;
+    border-radius: 6px;
+    padding: 0 10px;
+    font-size: 14px;
+    cursor: pointer;
+    outline: none;
+    height: 32px;
+    transition: border-color 0.15s;
+}
+
+#datePicker:focus,
+.flatpickr-input:focus {
+    border-color: #3b82f6;
+}
+
+/* ── Buttons ──────────────────────────────────────────────────────────────── */
+
+button {
+    height: 32px;
+    padding: 0 14px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.08s;
+    white-space: nowrap;
+}
+
+button:active { transform: scale(0.96); }
+
+#btnToday {
+    background: #16a34a;
+    color: #fff;
+}
+#btnToday:hover { background: #15803d; }
+
+#btnPrev, #btnNext {
+    background: #334155;
+    color: #cbd5e1;
+}
+#btnPrev:hover, #btnNext:hover {
+    background: #475569;
+    color: #f1f5f9;
+}
+
+/* ── Filters ──────────────────────────────────────────────────────────────── */
+
+.filters {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    margin-left: auto;
+}
+
+#statusDisplay {
+    font-size: 14px;
+    color: #94a3b8;
+    white-space: nowrap;
+    margin-right: 10px;
+}
+
+.filters label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 14px;
+    color: #cbd5e1;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 5px;
+    user-select: none;
+    transition: background 0.15s;
+    white-space: nowrap;
+}
+
+.filters label:hover { background: #334155; }
+
+.filters input[type="checkbox"] {
+    accent-color: #3b82f6;
+    width: 13px;
+    height: 13px;
+    cursor: pointer;
+}
+
+.filters u {
+    text-underline-offset: 2px;
+    text-decoration-thickness: 1px;
+}
+
+/* ── Map ──────────────────────────────────────────────────────────────────── */
+
 #map-container {
-    /* 100vh total height - 50px for controls - 150px for timeline */
-    height: calc(100vh - 200px);
+    flex: 1;
     width: 100%;
+    min-height: 0;
 }
 
 #map {
@@ -28,154 +149,158 @@ body, html {
     width: 100%;
 }
 
+/* ── Timeline ─────────────────────────────────────────────────────────────── */
+
 #timeline-container {
-    height: 200px;
-    background: #2c3e50;
+    height: 175px;
+    flex-shrink: 0;
+    background: #1e293b;
     color: white;
     overflow-x: auto;
+    overflow-y: hidden;
     display: flex;
-    /* REMOVED align-items: center; so it defaults to stretch */
-    padding: 10px 20px;
-    box-sizing: border-box;
+    padding: 8px 16px;
+    border-top: 1px solid #334155;
 }
 
 #timeline {
     display: flex;
     min-width: 100%;
-    /* ADDED height to fill the stretched container */
     height: 100%;
+    gap: 2px;
 }
 
 .timeline-item {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: flex-end; /* Pushes content to the bottom */
+    justify-content: flex-end;
     cursor: pointer;
-    opacity: 0.6;
-    transition: opacity 0.2s;
-    min-width: 25px;
-    padding: 0 6px;
-    border-right: 1px solid #455a64;
+    opacity: 0.5;
+    transition: opacity 0.15s, background 0.15s;
+    min-width: 28px;
+    padding: 0 5px 6px;
+    border-radius: 6px;
     border-bottom: 3px solid transparent;
-    /* ADDED height to stretch the item and make separator lines even */
     height: 100%;
 }
 
-.timeline-item:last-child {
-    border-right: none; /* Hide the separator on the very last item */
-}
-
-.timeline-item:hover, .timeline-item.active {
+.timeline-item:hover {
     opacity: 1;
+    background: #334155;
 }
 
 .timeline-item.active {
-    font-weight: bold;
-    color: #4CAF50;
-    border-bottom: 3px solid #4CAF50;
+    opacity: 1;
+    background: rgba(74, 222, 128, 0.08);
+    border-bottom: 3px solid #4ade80;
 }
 
-/* New class for the vertical icon stack */
 .timeline-icons {
     display: flex;
-    flex-direction: column; /* Stack icons top-to-bottom */
-    gap: 8px;
-    margin-bottom: 10px; /* Space between the bottom icon and the date */
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 8px;
+    font-size: 14px;
+    line-height: 1;
 }
 
-/* New class for the vertical date */
 .timeline-date {
-    writing-mode: vertical-rl; /* Turns the text vertical */
-    transform: rotate(180deg); /* Flips it so it reads from bottom to top */
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
     white-space: nowrap;
     letter-spacing: 1px;
+    font-size: 14px;
+    color: #94a3b8;
 }
 
-.event-dot {
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    background: #e74c3c;
-    margin-top: 10px;
+.timeline-item:hover .timeline-date { color: #cbd5e1; }
+
+.timeline-item.active .timeline-date {
+    color: #4ade80;
+    font-weight: 600;
 }
 
-.filters {
-    display: flex;
-    gap: 10px;
-    margin-left: auto;
-}
-
-/* --- Help Icon & Modal Styles --- */
+/* ── Help icon ────────────────────────────────────────────────────────────── */
 
 .help-icon {
     display: inline-flex;
     justify-content: center;
     align-items: center;
-    width: 20px;
-    height: 20px;
-    background: #3498db;
-    color: white;
+    width: 22px;
+    height: 22px;
+    background: #334155;
+    color: #94a3b8;
     border-radius: 50%;
     font-size: 14px;
     font-weight: bold;
     cursor: pointer;
-    margin-left: 5px;
+    margin-left: 4px;
     user-select: none;
+    transition: background 0.15s, color 0.15s;
 }
 
 .help-icon:hover {
-    background: #2980b9;
+    background: #3b82f6;
+    color: #fff;
 }
+
+/* ── Modals ───────────────────────────────────────────────────────────────── */
 
 .modal-overlay {
     position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
     display: flex;
     justify-content: center;
     align-items: center;
     z-index: 9999;
+    backdrop-filter: blur(3px);
 }
 
-.modal-overlay.hidden {
-    display: none;
-}
+.modal-overlay.hidden { display: none; }
 
 .modal-content {
-    background: white;
-    padding: 25px 40px;
-    border-radius: 8px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-    color: #333;
+    background: #1e293b;
+    padding: 28px 36px;
+    border-radius: 12px;
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6);
+    color: #f1f5f9;
+    border: 1px solid #334155;
+    min-width: 280px;
 }
 
 .modal-content h3 {
-    margin-top: 0;
-    margin-bottom: 15px;
+    margin: 0 0 16px;
+    font-size: 15px;
+    color: #f1f5f9;
 }
 
 .modal-content ul {
-    list-style-type: none;
+    list-style: none;
     padding: 0;
-    line-height: 2;
     margin: 0;
+    line-height: 2.3;
+    font-size: 14px;
+    color: #cbd5e1;
 }
 
 kbd {
-    background: #eee;
-    padding: 3px 6px;
-    border: 1px solid #ccc;
+    background: #334155;
+    color: #f1f5f9;
+    padding: 2px 6px;
+    border: 1px solid #475569;
     border-radius: 4px;
     font-family: monospace;
+    font-size: 14px;
     font-weight: bold;
-    margin-right: 5px;
+    margin-right: 4px;
 }
 
 .modal-hint {
-    font-size: 0.85em;
-    color: #7f8c8d;
-    margin-top: 20px;
+    font-size: 0.82em;
+    color: #475569;
+    margin-top: 18px;
     margin-bottom: 0;
     text-align: center;
 }
