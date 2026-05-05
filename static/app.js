@@ -181,10 +181,10 @@ function renderTimeline() {
     if (availableDates.length === 0) return;
 
     // 1. Calculate how many items can fit on screen
-    // Container width minus 40px for the container's left/right padding
-    const containerWidth = timelineContainer.clientWidth - 40;
-    // Each item is ~38px (25px min-width + 12px padding + 1px border)
-    const itemWidth = 38;
+    // Container width minus 32px for the container's left/right padding (16px each)
+    const containerWidth = timelineContainer.clientWidth - 32;
+    // Each item is ~30px (28px min-width + 2px gap between items)
+    const itemWidth = 30;
     const maxItems = Math.max(1, Math.floor(containerWidth / itemWidth));
 
     // 2. Try to center the current date
