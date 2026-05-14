@@ -108,6 +108,20 @@ def fetch_and_store(conn):
     # Wipe today's pin records before re-inserting so re-runs don't duplicate rows
     c.execute('DELETE FROM pin_status WHERE record_date = ?', (today,))
 
+    # Load the most recent stored record for each pin so we can skip unchanged ones
+    last_pins = {}
+    for row in c.execute('''
+        SELECT pin_type, cartodb_id, status, geometry FROM pin_status
+        WHERE record_date < ? AND id IN (
+            SELECT MAX(id) FROM pin_status WHERE record_date < ? GROUP BY pin_type, cartodb_id
+        )
+    ''', (today, today)).fetchall():
+        last_pins[(row[0], row[1])] = (row[2], row[3])
+
+    seen_pins = set()
+    pins_saved = 0
+    pins_skipped = 0
+
     for pin_type, url in URLS['pins'].items():
         try:
             data = requests.get(url, verify=False).json()
@@ -116,18 +130,40 @@ def fetch_and_store(conn):
                 if not geom:
                     continue
 
+                cid = feature['properties'].get('cartodb_id')
+                status = feature['properties'].get('status')
+                geom_str = json.dumps(geom)
+                key = (pin_type, cid)
+                seen_pins.add(key)
+
+                # Skip if geometry and status haven't changed
+                if key in last_pins:
+                    last_status, last_geom = last_pins[key]
+                    if last_status == status and last_geom == geom_str:
+                        pins_skipped += 1
+                        continue
+
                 c.execute('''INSERT INTO pin_status
                              (created_at, record_date, pin_type, cartodb_id, name, description, status, geometry)
                              VALUES (?, ?, ?, ?, ?, ?, ?, ?)''',
-                          (now, today, pin_type, feature['properties'].get('cartodb_id'),
+                          (now, today, pin_type, cid,
                            feature['properties'].get('name'),
-                           feature['properties'].get('description'), feature['properties'].get('status'),
-                           json.dumps(geom)))
+                           feature['properties'].get('description'), status,
+                           geom_str))
+                pins_saved += 1
         except Exception as e:
             print(f"Error fetching pin data for {pin_type}: {e}")
 
+    # Insert inactive tombstones for pins that were active yesterday but gone today
+    for (pin_type, cid), (last_status, last_geom) in last_pins.items():
+        if last_status == 'active' and (pin_type, cid) not in seen_pins:
+            c.execute('''INSERT INTO pin_status
+                         (created_at, record_date, pin_type, cartodb_id, name, description, status, geometry)
+                         VALUES (?, ?, ?, ?, ?, ?, ?, ?)''',
+                      (now, today, pin_type, cid, None, None, 'inactive', last_geom))
+
     conn.commit()
-    print(f"Data for {today} saved at {now}. Roads: {roads_saved} new, {roads_skipped} unchanged.")
+    print(f"Data for {today} saved at {now}. Roads: {roads_saved} new, {roads_skipped} unchanged. Pins: {pins_saved} new, {pins_skipped} unchanged.")
 
 
 if __name__ == "__main__":

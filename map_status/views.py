@@ -35,10 +35,11 @@ def timeline_data(request):
     dates_rows = conn.execute('SELECT fetch_date FROM fetch_log ORDER BY fetch_date DESC').fetchall()
 
     pins_rows = conn.execute('''
-        SELECT record_date, pin_type, geometry
+        SELECT record_date, pin_type, cartodb_id, geometry, status
         FROM pin_status
         WHERE geometry IS NOT NULL
           AND pin_type IN ('hiker_biker', 'winter_rec')
+        ORDER BY pin_type, cartodb_id, record_date ASC
     ''').fetchall()
 
     roads_rows = conn.execute(
@@ -54,12 +55,12 @@ def timeline_data(request):
             road_history[cid] = []
         road_history[cid].append((row['record_date'], row['status']))
 
-    pins_by_date = {}
+    pin_history = {}
     for row in pins_rows:
-        d = row['record_date']
-        if d not in pins_by_date:
-            pins_by_date[d] = []
-        pins_by_date[d].append({'type': row['pin_type'], 'geom': row['geometry']})
+        key = (row['pin_type'], row['cartodb_id'])
+        if key not in pin_history:
+            pin_history[key] = []
+        pin_history[key].append((row['record_date'], row['status'], row['geometry']))
 
     result = []
     for row in dates_rows:
@@ -76,9 +77,20 @@ def timeline_data(request):
             if latest_status is not None:
                 roads_for_date.append({'id': cid, 'status': latest_status})
 
+        pins_for_date = []
+        for (pin_type, _cid), history in pin_history.items():
+            latest = None
+            for record_date, status, geom in history:
+                if record_date <= date:
+                    latest = (status, geom, pin_type)
+                else:
+                    break
+            if latest and latest[0] == 'active':
+                pins_for_date.append({'type': latest[2], 'geom': latest[1]})
+
         result.append({
             'date': date,
-            'pins': pins_by_date.get(date, []),
+            'pins': pins_for_date,
             'roads': roads_for_date,
         })
 
@@ -100,7 +112,18 @@ def get_data(request):
         )
     ''', (target_date,)).fetchall()
 
-    pins = conn.execute('SELECT * FROM pin_status WHERE record_date = ?', (target_date,)).fetchall()
+    pins = conn.execute('''
+        SELECT ps.* FROM pin_status ps
+        WHERE ps.id = (
+            SELECT id FROM pin_status ps2
+            WHERE ps2.pin_type = ps.pin_type
+              AND ps2.cartodb_id = ps.cartodb_id
+              AND ps2.record_date <= ?
+            ORDER BY ps2.record_date DESC
+            LIMIT 1
+        )
+        AND ps.status = 'active'
+    ''', (target_date,)).fetchall()
     conn.close()
 
     return JsonResponse({
