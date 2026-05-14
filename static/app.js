@@ -3,10 +3,18 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 18,
 }).addTo(map);
 
+map.on('click', function() {
+    if (selectedRoadLayer) {
+        selectedRoadLayer.resetStyle();
+        selectedRoadLayer = null;
+    }
+});
+
 let currentLayers = L.layerGroup().addTo(map);
 let availableDates = [];
 let timelineData = []; // Store events for timeline
 let currentDateIndex = 0;
+let selectedRoadLayer = null;
 
 const getPinIcon = (pinType) => {
     let pinColor = '#3498db';
@@ -85,6 +93,7 @@ async function loadDataForDate(dateStr) {
     const data = await res.json();
 
     currentLayers.clearLayers();
+    selectedRoadLayer = null;
 
     const showRoads = document.getElementById('filterRoads').checked;
     const showHikers = document.getElementById('filterHikers').checked;
@@ -144,8 +153,31 @@ async function loadDataForDate(dateStr) {
             const geojson = JSON.parse(road.geometry);
             const color = road.status === 'open' ? 'green' : (road.status === 'closed' ? 'red' : 'orange');
 
-            L.geoJSON(geojson, {
-                style: { color: color, weight: 4 }
+            const roadLayer = L.geoJSON(geojson, {
+                style: { color: color, weight: 4, opacity: 0.85 },
+                onEachFeature: function(feature, layer) {
+                    layer.on({
+                        mouseover: function() {
+                            if (roadLayer !== selectedRoadLayer) {
+                                layer.setStyle({ color: '#00e5ff', weight: 8, opacity: 1.0 });
+                            }
+                            layer._map.getContainer().style.cursor = 'pointer';
+                        },
+                        mouseout: function() {
+                            if (roadLayer !== selectedRoadLayer) {
+                                roadLayer.resetStyle(layer);
+                            }
+                            layer._map.getContainer().style.cursor = '';
+                        },
+                        click: function() {
+                            if (selectedRoadLayer && selectedRoadLayer !== roadLayer) {
+                                selectedRoadLayer.resetStyle();
+                            }
+                            selectedRoadLayer = roadLayer;
+                            layer.setStyle({ color: '#00e5ff', weight: 8, opacity: 1.0 });
+                        }
+                    });
+                }
             }).bindPopup(`<b>${road.rdname}</b><br>Status: ${road.status}<br>Reason: ${road.reason || 'N/A'}`).addTo(currentLayers);
         });
     }
