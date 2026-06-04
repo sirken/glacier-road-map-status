@@ -11,7 +11,13 @@ map.on('click', function() {
 });
 
 let currentLayers = L.layerGroup().addTo(map);
-let pinClusterGroup = L.markerClusterGroup().addTo(map);
+let pinClusterGroup = L.markerClusterGroup({
+    spiderfyOnEveryZoom: true,
+    zoomToBoundsOnClick: false,
+}).addTo(map);
+pinClusterGroup.on('clusteradd', function(e) {
+    setTimeout(function() { e.layer.spiderfy(); }, 0);
+});
 let availableDates = [];
 let timelineData = []; // Store events for timeline
 let currentDateIndex = 0;
@@ -199,9 +205,10 @@ async function loadDataForDate(dateStr) {
         const geojson = JSON.parse(pin.geometry);
         L.geoJSON(geojson, {
             pointToLayer: function (feature, latlng) {
-                return L.marker(latlng, { icon: getPinIcon(pin.pin_type) });
+                return L.marker(latlng, { icon: getPinIcon(pin.pin_type) })
+                    .bindPopup(`<b>${pin.name || pin.pin_type.replace('_', ' ').toUpperCase()}</b><br>${pin.description}`);
             }
-        }).bindPopup(`<b>${pin.name || pin.pin_type.replace('_', ' ').toUpperCase()}</b><br>${pin.description}`).addTo(pinClusterGroup);
+        }).addTo(pinClusterGroup);
     });
 
     renderTimeline();
