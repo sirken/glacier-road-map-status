@@ -15,9 +15,13 @@ let pinClusterGroup = L.markerClusterGroup({
     spiderfyOnEveryZoom: true,
     zoomToBoundsOnClick: false,
 }).addTo(map);
-pinClusterGroup.on('clusteradd', function(e) {
-    setTimeout(function() { e.layer.spiderfy(); }, 0);
-});
+
+function spiderfyAll() {
+    pinClusterGroup._featureGroup.eachLayer(function(layer) {
+        if (typeof layer.spiderfy === 'function') layer.spiderfy();
+    });
+}
+map.on('zoomend', spiderfyAll);
 let availableDates = [];
 let timelineData = []; // Store events for timeline
 let currentDateIndex = 0;
@@ -211,6 +215,7 @@ async function loadDataForDate(dateStr) {
         }).addTo(pinClusterGroup);
     });
 
+    setTimeout(spiderfyAll, 300);
     renderTimeline();
 }
 
