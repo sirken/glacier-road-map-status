@@ -11,6 +11,7 @@ map.on('click', function() {
 });
 
 let currentLayers = L.layerGroup().addTo(map);
+let pinClusterGroup = L.markerClusterGroup().addTo(map);
 let availableDates = [];
 let timelineData = []; // Store events for timeline
 let currentDateIndex = 0;
@@ -93,6 +94,7 @@ async function loadDataForDate(dateStr) {
     const data = await res.json();
 
     currentLayers.clearLayers();
+    pinClusterGroup.clearLayers();
     selectedRoadLayer = null;
 
     const showRoads = document.getElementById('filterRoads').checked;
@@ -199,7 +201,7 @@ async function loadDataForDate(dateStr) {
             pointToLayer: function (feature, latlng) {
                 return L.marker(latlng, { icon: getPinIcon(pin.pin_type) });
             }
-        }).bindPopup(`<b>${pin.name || pin.pin_type.replace('_', ' ').toUpperCase()}</b><br>${pin.description}`).addTo(currentLayers);
+        }).bindPopup(`<b>${pin.name || pin.pin_type.replace('_', ' ').toUpperCase()}</b><br>${pin.description}`).addTo(pinClusterGroup);
     });
 
     renderTimeline();
