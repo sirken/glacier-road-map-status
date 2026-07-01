@@ -1,6 +1,10 @@
 # glacier-road-map-status
 Django driven app to retrieve daily Glacier National Park road status, hiker/biker icons and save to a local sqlite DB so we can see changes over time
 
+## Screenshots
+
+![Interface Screenshot](screenshots/screenshot.png)
+
 ## Features
 
 - Retrieve new geojson data daily
