@@ -1,9 +1,7 @@
 # glacier-road-map-status
-Django driven app to retrieve daily Glacier National Park road status, hiker/biker icons and save to a local sqlite DB so we can see changes over time
+Django app to retrieve daily road status in Glacier National Park, track road closures, pin movements, and save details to a database so we can track the changes over time. The [NPS website](https://www.nps.gov/glac/planyourvisit/directions.htm) provides daily but not historical status updates.
 
-## Screenshots
-
-![Interface Screenshot](screenshots/screenshot.png)
+![Interface Screenshot](screenshots/timeline-anim.webp)
 
 ## Features
 
