@@ -128,9 +128,13 @@ async function loadDataForDate(dateStr) {
     let changedRoadsCount = 0;
 
     if (yesterdayData) {
-        // Count Pin Changes
+        // Count Pin Changes (new/moved pins, and pins that disappeared e.g. went inactive)
         todayTimeline.pins.forEach(todayPin => {
             const matchFound = yesterdayData.pins.some(yPin => yPin.type === todayPin.type && yPin.geom === todayPin.geom);
+            if (!matchFound) changedPinsCount++;
+        });
+        yesterdayData.pins.forEach(yesterdayPin => {
+            const matchFound = todayTimeline.pins.some(tPin => tPin.type === yesterdayPin.type && tPin.geom === yesterdayPin.geom);
             if (!matchFound) changedPinsCount++;
         });
 
@@ -148,8 +152,8 @@ async function loadDataForDate(dateStr) {
     } else if (changedPinsCount > 0 || changedRoadsCount > 0) {
         let parts = [];
 
-        if (changedPinsCount === 1) parts.push("1 pin moved");
-        else if (changedPinsCount > 1) parts.push(`${changedPinsCount} pins moved`);
+        if (changedPinsCount === 1) parts.push("1 pin change");
+        else if (changedPinsCount > 1) parts.push(`${changedPinsCount} pin changes`);
 
         if (changedRoadsCount === 1) parts.push("1 road segment change");
         else if (changedRoadsCount > 1) parts.push(`${changedRoadsCount} road segment changes`);
@@ -280,13 +284,21 @@ function renderTimeline() {
 
         // LOGIC: Check if today's pins or roads moved/changed since yesterday
         if (yesterdayData) {
-            // Check Pins
+            // Check Pins (new/moved, and pins that disappeared e.g. went inactive)
             todayData.pins.forEach(todayPin => {
                 const matchFound = yesterdayData.pins.some(yesterdayPin =>
                     yesterdayPin.type === todayPin.type && yesterdayPin.geom === todayPin.geom
                 );
                 if (!matchFound) {
                     movedPins.add(todayPin.type);
+                }
+            });
+            yesterdayData.pins.forEach(yesterdayPin => {
+                const matchFound = todayData.pins.some(todayPin =>
+                    todayPin.type === yesterdayPin.type && todayPin.geom === yesterdayPin.geom
+                );
+                if (!matchFound) {
+                    movedPins.add(yesterdayPin.type);
                 }
             });
 
